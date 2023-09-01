@@ -4,6 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,12 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Configuration
 @Slf4j
@@ -36,12 +41,11 @@ public class jwtGrantedAuthoritiesConverter implements Converter<Jwt, Collection
     }
 
     @Override
-    public Collection<GrantedAuthority> convert(Jwt jwt) {
-        var realmRoles = realmRoles(jwt);
-        var clientRoles = clientRoles(jwt, clientId);
+    public Collection<GrantedAuthority> convert(@NonNull Jwt jwt) {
+        List<String> realmRoles = realmRoles(jwt);
+        List<String> clientRoles = clientRoles(jwt, clientId);
 
         log.info("convert");
-
         Collection<GrantedAuthority> authorities = Stream
                 .concat(realmRoles.stream(), clientRoles.stream())
                 .map(SimpleGrantedAuthority::new)

@@ -16,14 +16,17 @@ spring:
         - id: http-bin
           uri: http://localhost:8888
           predicates:
-            - Path=/*
+            - Path=/httpbin/**
           filters:
+            - RewritePath=/httpbin(?<segment>/?.*), $\{segment}
             - name: LoggingFilter
               args:
                 baseMessage: My Custom Message
                 preLogger: true
                 postLogger: true
 
+
+## TODO: zipkin
 #management:
 #  tracing:
 #    sampling:
@@ -38,6 +41,10 @@ spring:
 #logging:
 #  pattern:
 #    level: "%5p [%X{traceId:-},%X{spanId:-}]"
+
 app:
   security:
     clientId: test-api
+logging:
+  level:
+    org.springframework.security: DEBUG

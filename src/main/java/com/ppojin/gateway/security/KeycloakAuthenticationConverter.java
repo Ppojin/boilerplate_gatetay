@@ -12,6 +12,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -19,7 +20,6 @@ import reactor.core.publisher.Mono;
 public class KeycloakAuthenticationConverter implements Converter<Jwt, Mono<KeycloakAuthenticationToken>> {
     private static final String REALM_ACCESS = "realm_access";
     private static final String RESOURCE_ACCESS = "resource_access";
-    private static final String USERNAME_CLAIM = "preferred_username";
     private static final String ROLES = "roles";
 
     private final String clientId;
@@ -41,7 +41,6 @@ public class KeycloakAuthenticationConverter implements Converter<Jwt, Mono<Keyc
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toSet());
 
-//            String username = extractUsername(token);
             log.info("[KeycloakAuthenticationConverter] authorities: {}", authorities);
             return new KeycloakAuthenticationToken(token, authorities);
         });
@@ -68,9 +67,5 @@ public class KeycloakAuthenticationConverter implements Converter<Jwt, Mono<Keyc
         }
 
         return realm_access.get(ROLES);
-    }
-
-    private String extractUsername(Jwt jwt) {
-        return jwt.hasClaim(USERNAME_CLAIM) ? jwt.getClaimAsString(USERNAME_CLAIM) : jwt.getSubject();
     }
 }

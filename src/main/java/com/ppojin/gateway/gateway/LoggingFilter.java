@@ -1,6 +1,8 @@
 package com.ppojin.gateway.gateway;
 
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -21,7 +23,8 @@ public class LoggingFilter extends AbstractGatewayFilterFactory<LoggingFilter.Co
 
     @Override
     public GatewayFilter apply(Config config) {
-        GatewayFilter filter = new OrderedGatewayFilter((exchange, chain) -> {
+        //HIGHEST_PRECEDENCE
+        return new OrderedGatewayFilter((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             ServerHttpResponse response = exchange.getResponse();
 
@@ -39,10 +42,7 @@ public class LoggingFilter extends AbstractGatewayFilterFactory<LoggingFilter.Co
                             log.info("Logging POST Filter End: response code -> {} ", response.getStatusCode());
                         }
                     }));
-        }, Ordered.LOWEST_PRECEDENCE); // 우선순위 지정할 수 있다
-        //HIGHEST_PRECEDENCE
-
-        return filter;
+        }, Ordered.HIGHEST_PRECEDENCE);
     }
 
     @Data

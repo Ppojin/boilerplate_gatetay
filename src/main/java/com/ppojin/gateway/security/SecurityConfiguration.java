@@ -2,6 +2,7 @@ package com.ppojin.gateway.security;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -10,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -17,6 +20,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
@@ -37,6 +42,12 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+        http.securityMatcher(new NegatedServerWebExchangeMatcher(
+                ServerWebExchangeMatchers.pathMatchers(
+                        "/realms/**", "/resources/**", "/robots.txt"
+                ))
+        );
+
         http.addFilterAfter((ServerWebExchange exchange, WebFilterChain chain) -> {
             log.info("security start");
             return chain.filter(exchange);
@@ -52,10 +63,8 @@ public class SecurityConfiguration {
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                .pathMatchers("/401.html")
-                .permitAll()
                 .anyExchange()
-                .hasAnyAuthority("admin")
+                .hasAnyAuthority("admin", "user")
         );
 
         http.exceptionHandling(exceptionHandlingSpec -> exceptionHandlingSpec

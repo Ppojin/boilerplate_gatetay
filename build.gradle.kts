@@ -7,6 +7,10 @@ plugins {
 group = "com.ppojin"
 version = "0.0.1-SNAPSHOT"
 
+springBoot {
+    mainClass = "com.ppojin.gateway.GatewayApplication"
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
 }
@@ -30,7 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-security")
 
-//    TODO: zipkin
+//    TODO: ADD zipkin
 //    implementation("org.springframework.boot:spring-boot-starter-actuator")
 //    implementation("io.micrometer:micrometer-tracing-bridge-brave")
 //    implementation("io.zipkin.reporter2:zipkin-reporter-brave")

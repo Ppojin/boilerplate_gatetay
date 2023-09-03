@@ -1,5 +1,12 @@
 # boilerplate_gatetay
 
+## Getting started
+```shell
+docker run -d --name httpbin -p 8888:80 kennethreitz/httpbin
+```
+
+##
+
 ![](./gateway_authentication_pattern.png)
 
 GATEWAY

@@ -1,7 +1,8 @@
 package com.ppojin.gateway.gateway;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
-import org.springframework.cloud.gateway.route.builder.GatewayFilterSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,12 +10,52 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class GatewayConfiguration {
 
+    private final String keycloakURI;
+    private final String httpbinURI;
+    private final LoggingFilter loggingFilter;
+
+    public GatewayConfiguration(
+            @Value("${ppojin_gw.keycloak.uri}") String keycloakURI,
+            @Value("${ppojin_gw.httpbin.uri}") String httpbinURI,
+            LoggingFilter loggingFilter
+    ) {
+        this.keycloakURI = keycloakURI;
+        this.httpbinURI = httpbinURI;
+        this.loggingFilter = loggingFilter;
+    }
+
+
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                .route("path_route", r -> r
-                        .path("/get")
-                        .uri("http://localhost:8888")
+                .route("http-bin", r -> r
+                        .path("/httpbin/**")
+                        .filters(f -> f
+                                .rewritePath("/httpbin(?<segment>/?.*)", "$\\{segment}")
+                                .filter(
+                                        loggingFilter.apply(config -> {
+                                        config.setBaseMessage("My Custom Message");
+                                        config.setPreLogger(true);
+                                        config.setPostLogger(true);
+                                        })
+                                )
+                        )
+                        .uri(httpbinURI)
+                        // spring:
+                        //   cloud:
+                        //     gateway:
+                        //       routes:
+                        //         - id: http-bin
+                        //           uri: http://localhost:8888
+                        //           predicates:
+                        //             - Path=/httpbin/**
+                        //           filters:
+                        //             - RewritePath=/httpbin(?<segment>/?.*), $\{segment}
+                        //             - name: LoggingFilter
+                        //               args:
+                        //                 baseMessage: My Custom Message
+                        //                 preLogger: true
+                        //                 postLogger: true
                 )
                 .build();
     }

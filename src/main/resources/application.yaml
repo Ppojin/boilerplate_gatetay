@@ -10,23 +10,14 @@ spring:
         jwt:
           issuer-uri: http://localhost:8080/realms/ppojin
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
-  cloud:
-    gateway:
-      routes:
-        - id: http-bin
-          uri: http://localhost:8888
-          predicates:
-            - Path=/httpbin/**
-          filters:
-            - RewritePath=/httpbin(?<segment>/?.*), $\{segment}
-            - name: LoggingFilter
-              args:
-                baseMessage: My Custom Message
-                preLogger: true
-                postLogger: true
 
+ppojin_gw:
+  keycloak:
+    uri: http://localhost:8080
+  httpbin:
+    uri: http://localhost:8888
 
-## TODO: zipkin
+## TODO: ADD zipkin
 #management:
 #  tracing:
 #    sampling:
@@ -45,6 +36,7 @@ spring:
 app:
   security:
     clientId: test-api
+
 logging:
   level:
     org.springframework.security: TRACE

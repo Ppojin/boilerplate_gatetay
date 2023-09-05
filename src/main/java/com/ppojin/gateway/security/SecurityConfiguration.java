@@ -2,6 +2,7 @@ package com.ppojin.gateway.security;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.security.StaticResourceLocation;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -20,13 +19,17 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
-import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
+import org.springframework.security.web.server.util.matcher.*;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
+import org.springframework.web.util.pattern.PathPattern;
+import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
+import java.util.stream.Stream;
 
 @Slf4j
 @EnableWebFluxSecurity
@@ -42,10 +45,19 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        http.securityMatcher(new NegatedServerWebExchangeMatcher(
-                ServerWebExchangeMatchers.pathMatchers(
-                        "/realms/**", "/resources/**", "/robots.txt"
-                ))
+        var keycloakMatcher = ServerWebExchangeMatchers.pathMatchers("/realms/**", "/resources/**", "/robots.txt");
+        var indexMatcher = ServerWebExchangeMatchers.pathMatchers("/");
+        var staticMatcher = ServerWebExchangeMatchers.pathMatchers(
+                EnumSet.allOf(StaticResourceLocation.class).stream()
+                        .flatMap(StaticResourceLocation::getPatterns)
+                        .toArray(String[]::new)
+        );
+        http.securityMatcher(
+                new NegatedServerWebExchangeMatcher(
+                        new OrServerWebExchangeMatcher(
+                                staticMatcher, keycloakMatcher, indexMatcher
+                        )
+                )
         );
 
         http.addFilterAfter((ServerWebExchange exchange, WebFilterChain chain) -> {

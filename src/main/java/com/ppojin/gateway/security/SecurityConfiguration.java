@@ -17,6 +17,8 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 import org.springframework.security.web.server.util.matcher.*;
@@ -67,9 +69,10 @@ public class SecurityConfiguration {
         http.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
 
         http.oauth2ResourceServer(oAuth2ResourceServerSpec -> oAuth2ResourceServerSpec
-                .jwt(jwtSpec -> {
-                    jwtSpec.jwtAuthenticationConverter(authenticationConverter);
-                })
+                .jwt(jwtSpec -> jwtSpec
+//                        .jwtDecoder()
+                        .jwtAuthenticationConverter(authenticationConverter)
+                )
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec

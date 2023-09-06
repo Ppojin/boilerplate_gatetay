@@ -1,8 +1,9 @@
 ppojin_gw:
+  hostname: http://localhost:30080
   keycloak:
     uri: http://keycloak.default.svc:8080
   httpbin:
-    uri: http://httpbin.default.svc:8080
+    uri: http://httpbin-lb.default.svc:8088
 
 spring:
   application:
@@ -11,8 +12,8 @@ spring:
     oauth2:
       resource-server:
         jwt:
-          issuer-uri: ${ppojin_gw.keycloak.uri}/realms/ppojin
-          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+          issuer-uri: ${ppojin_gw.hostname}/realms/ppojin
+          jwk-set-uri: ${ppojin_gw.keycloak.uri}/realms/ppojin/protocol/openid-connect/certs
   cloud:
     gateway:
       routes:

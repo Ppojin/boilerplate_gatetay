@@ -5,4 +5,4 @@ ppojin_gw:
   keycloak:
     uri: http://localhost:8080
   httpbin:
-    uri: http://localhost:8888
+    uri: http://localhost:8088

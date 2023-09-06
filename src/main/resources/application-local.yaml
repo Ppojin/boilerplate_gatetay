@@ -1,0 +1,8 @@
+server:
+  port: 8081
+
+ppojin_gw:
+  keycloak:
+    uri: http://localhost:8080
+  httpbin:
+    uri: http://localhost:8888

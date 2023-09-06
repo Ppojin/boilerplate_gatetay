@@ -20,16 +20,12 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 import org.springframework.security.web.server.util.matcher.*;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
-import org.springframework.web.util.pattern.PathPattern;
-import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
-import java.util.stream.Stream;
 
 @Slf4j
 @EnableWebFluxSecurity
@@ -46,7 +42,7 @@ public class SecurityConfiguration {
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         var keycloakMatcher = ServerWebExchangeMatchers.pathMatchers("/realms/**", "/resources/**", "/robots.txt");
-        var indexMatcher = ServerWebExchangeMatchers.pathMatchers("/");
+        var indexMatcher = ServerWebExchangeMatchers.pathMatchers("/", "/index.html");
         var staticMatcher = ServerWebExchangeMatchers.pathMatchers(
                 EnumSet.allOf(StaticResourceLocation.class).stream()
                         .flatMap(StaticResourceLocation::getPatterns)
@@ -55,7 +51,9 @@ public class SecurityConfiguration {
         http.securityMatcher(
                 new NegatedServerWebExchangeMatcher(
                         new OrServerWebExchangeMatcher(
-                                staticMatcher, keycloakMatcher, indexMatcher
+                                staticMatcher,
+                                keycloakMatcher,
+                                indexMatcher
                         )
                 )
         );
@@ -75,6 +73,8 @@ public class SecurityConfiguration {
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
+//                .pathMatchers("/realms/**", "/resources/**", "/robots.txt")
+//                .permitAll()
                 .anyExchange()
                 .hasAnyAuthority("admin", "user")
         );

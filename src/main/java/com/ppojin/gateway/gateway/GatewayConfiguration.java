@@ -3,6 +3,8 @@ package com.ppojin.gateway.gateway;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.GatewayFilterSpec;
+import org.springframework.cloud.gateway.route.builder.PredicateSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,18 +30,10 @@ public class GatewayConfiguration {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                /*
-                spring.cloud.gateway.routes[0].id=http-bin
-                spring.cloud.gateway.routes[0].uri=http://localhost:8888
-                spring.cloud.gateway.routes[0].predicates=["Path=\/httpbin\/**"]
-                spring.cloud.gateway.routes[0].filters[1].name=LoggingFilter
-                spring.cloud.gateway.routes[0].filters[1].args.baseMessage=My Custom Message
-                spring.cloud.gateway.routes[0].filters[1].args.postLogger=true
-                spring.cloud.gateway.routes[0].filters[1].args.preLogger=true
-                */
-                .route("http-bin", r -> r
+                .route("http-bin", p -> p
                         .path("/httpbin/**")
-                        .filters(f -> f.rewritePath("/httpbin(?<segment>/?.*)", "$\\{segment}")
+                        .filters(f->f
+                                .rewritePath("/httpbin(?<segment>/?.*)", "$\\{segment}")
                                 .filter(loggingFilter.apply(args -> {
                                     args.setBaseMessage("My Custom Message");
                                     args.setPreLogger(true);
@@ -47,6 +41,19 @@ public class GatewayConfiguration {
                                 }))
                         )
                         .uri(httpbinURI)
+                        /*
+                        - id: http-bin
+                          uri: ${ppojin_gw.httpbin.uri}
+                          predicates:
+                            - Path=/httpbin/**
+                          filters:
+                            - RewritePath=/httpbin(?<segment>/?.*), $\{segment}
+                            - name: LoggingFilter
+                              args:
+                                preLogger: 'true'
+                                postLogger: 'true'
+                                baseMessage: My Custom Message
+                        */
                 )
                 .build();
     }

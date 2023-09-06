@@ -1,5 +1,8 @@
-server:
-  port: 8081
+ppojin_gw:
+  keycloak:
+    uri: http://keycloak.default.svc:8080
+  httpbin:
+    uri: http://httpbin.default.svc:8080
 
 spring:
   application:
@@ -8,14 +11,21 @@ spring:
     oauth2:
       resource-server:
         jwt:
-          issuer-uri: http://localhost:8080/realms/ppojin
+          issuer-uri: ${ppojin_gw.keycloak.uri}/realms/ppojin
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
-
-ppojin_gw:
-  keycloak:
-    uri: http://localhost:8080
-  httpbin:
-    uri: http://localhost:8888
+  cloud:
+    gateway:
+      routes:
+        - id: keycloak
+          uri: ${ppojin_gw.keycloak.uri}
+          predicates:
+            - Path=/realms/**,/resources/**,/robots.txt
+          filters:
+            - name: LoggingFilter
+              args:
+                preLogger: 'true'
+                postLogger: 'true'
+                baseMessage: My Custom Message
 
 ## TODO: ADD zipkin
 #management:

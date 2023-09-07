@@ -29,6 +29,8 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 
+import static org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers;
+
 @Slf4j
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
@@ -43,9 +45,10 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        var keycloakMatcher = ServerWebExchangeMatchers.pathMatchers("/realms/**", "/resources/**", "/robots.txt");
-        var indexMatcher = ServerWebExchangeMatchers.pathMatchers("/", "/index.html");
-        var staticMatcher = ServerWebExchangeMatchers.pathMatchers(
+        var keycloakMatcher = pathMatchers("/realms/**", "/resources/**", "/robots.txt");
+        var indexMatcher = pathMatchers("/", "/index.html");
+        var oidcMatcher = pathMatchers("/token");
+        var staticMatcher = pathMatchers(
                 EnumSet.allOf(StaticResourceLocation.class).stream()
                         .flatMap(StaticResourceLocation::getPatterns)
                         .toArray(String[]::new)
@@ -55,7 +58,8 @@ public class SecurityConfiguration {
                         new OrServerWebExchangeMatcher(
                                 staticMatcher,
                                 keycloakMatcher,
-                                indexMatcher
+                                indexMatcher,
+                                oidcMatcher
                         )
                 )
         );
@@ -76,8 +80,8 @@ public class SecurityConfiguration {
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-//                .pathMatchers("/realms/**", "/resources/**", "/robots.txt")
-//                .permitAll()
+                .pathMatchers("/test/**")
+                .permitAll()
                 .anyExchange()
                 .hasAnyAuthority("admin", "user")
         );

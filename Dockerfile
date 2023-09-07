@@ -17,6 +17,7 @@ WORKDIR /app
 COPY --from=builder /build/build/libs/gateway-0.0.1-SNAPSHOT.jar .
 
 ENV SERVER_PORT=8080
+ENV HOSTNAME=http://app.ppojin.localhost:30080
 ENV KEYCLOAK_URI=http://keycloak.default.svc:8080
 ENV HTTPBIN_URI=http://httpbin.default.svc:8080
 ENV DEBUG_PORT=30050
@@ -27,6 +28,7 @@ ENTRYPOINT "java" \
     "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:${DEBUG_PORT}" \
     "-jar" \
     "-Dserver.port=${SERVER_PORT}" \
+    "-Dppojin_gw.hostname=${HOSTNAME}" \
     "-Dppojin_gw.keycloak.uri=${KEYCLOAK_URI}" \
     "-Dppojin_gw.httpbin.uri=${HTTPBIN_URI}" \
     "gateway-0.0.1-SNAPSHOT.jar"

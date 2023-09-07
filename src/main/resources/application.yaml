@@ -1,5 +1,4 @@
 ppojin_gw:
-  hostname: http://localhost:30080
   keycloak:
     uri: http://keycloak.default.svc:8080
   httpbin:
@@ -22,6 +21,17 @@ spring:
           predicates:
             - Path=/realms/**,/resources/**,/robots.txt
           filters:
+            - name: LoggingFilter
+              args:
+                preLogger: 'true'
+                postLogger: 'true'
+                baseMessage: My Custom Message
+        - id: http-bin-test
+          uri: ${ppojin_gw.httpbin.uri}
+          predicates:
+            - Path=/test/**
+          filters:
+            - RewritePath=/test(?<segment>/?.*), $\{segment}
             - name: LoggingFilter
               args:
                 preLogger: 'true'

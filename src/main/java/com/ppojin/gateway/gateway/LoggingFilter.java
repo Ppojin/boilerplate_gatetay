@@ -9,6 +9,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.OrderedGatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ public class LoggingFilter extends AbstractGatewayFilterFactory<LoggingFilter.Co
             log.info("Logging Filter baseMessage: {} ", config.getBaseMessage());
 
             if (config.isPreLogger()) {
-                log.info("Logging PRE Filter Start: request id -> {}", request.getId());
+                log.info("Logging PRE Filter Start: request id -> {}, url -> {}", request.getId(), request.getPath());
             }
 
             //Custom Post Filter

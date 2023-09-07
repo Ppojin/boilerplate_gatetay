@@ -12,16 +12,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class GatewayConfiguration {
 
-    private final String keycloakURI;
     private final String httpbinURI;
     private final LoggingFilter loggingFilter;
 
     public GatewayConfiguration(
-            @Value("${ppojin_gw.keycloak.uri}") String keycloakURI,
             @Value("${ppojin_gw.httpbin.uri}") String httpbinURI,
             LoggingFilter loggingFilter
     ) {
-        this.keycloakURI = keycloakURI;
         this.httpbinURI = httpbinURI;
         this.loggingFilter = loggingFilter;
     }
@@ -33,7 +30,7 @@ public class GatewayConfiguration {
                 .route("http-bin", p -> p
                         .path("/httpbin/**")
                         .filters(f->f
-                                .rewritePath("/httpbin(?<segment>/?.*)", "$\\{segment}")
+                                .rewritePath("httpbin(?<segment>/?.*)", "$\\{segment}")
                                 .filter(loggingFilter.apply(args -> {
                                     args.setBaseMessage("My Custom Message");
                                     args.setPreLogger(true);
@@ -41,19 +38,6 @@ public class GatewayConfiguration {
                                 }))
                         )
                         .uri(httpbinURI)
-                        /*
-                        - id: http-bin
-                          uri: ${ppojin_gw.httpbin.uri}
-                          predicates:
-                            - Path=/httpbin/**
-                          filters:
-                            - RewritePath=/httpbin(?<segment>/?.*), $\{segment}
-                            - name: LoggingFilter
-                              args:
-                                preLogger: 'true'
-                                postLogger: 'true'
-                                baseMessage: My Custom Message
-                        */
                 )
                 .build();
     }

@@ -30,7 +30,7 @@ repositories {
 extra["springCloudVersion"] = "2023.0.0-M1"
 
 dependencies {
-//    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("io.netty:netty-resolver-dns-native-macos:4.1.97.Final") // for mac
 
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")

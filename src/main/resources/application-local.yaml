@@ -7,3 +7,11 @@ ppojin_gw:
     uri: http://localhost:8080
   httpbin:
     uri: http://localhost:8088
+
+
+spring:
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: http://app.ppojin.localhost:30080/realms/ppojin

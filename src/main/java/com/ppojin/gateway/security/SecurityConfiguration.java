@@ -3,7 +3,6 @@ package com.ppojin.gateway.security;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.StaticResourceLocation;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -17,8 +16,6 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
-import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 import org.springframework.security.web.server.util.matcher.*;
@@ -37,17 +34,19 @@ import static org.springframework.security.web.server.util.matcher.ServerWebExch
 @Configuration
 public class SecurityConfiguration {
 
-    private final Converter<Jwt, Mono<KeycloakAuthenticationToken>> authenticationConverter;
+    private final Converter<Jwt, Mono<KeycloakAuthenticationToken>> authorizationConverter;
 
-    public SecurityConfiguration(Converter<Jwt, Mono<KeycloakAuthenticationToken>> keycloakAuthenticationConverter) {
-        this.authenticationConverter = keycloakAuthenticationConverter;
+    public SecurityConfiguration(
+            Converter<Jwt, Mono<KeycloakAuthenticationToken>> KeycloakAuthorizationConverter
+    ) {
+        this.authorizationConverter = KeycloakAuthorizationConverter;
     }
 
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         var keycloakMatcher = pathMatchers("/realms/**", "/resources/**", "/robots.txt");
         var indexMatcher = pathMatchers("/", "/index.html");
-        var oidcMatcher = pathMatchers("/token");
+        var oidcMatcher = pathMatchers("/token/**");
         var staticMatcher = pathMatchers(
                 EnumSet.allOf(StaticResourceLocation.class).stream()
                         .flatMap(StaticResourceLocation::getPatterns)
@@ -74,13 +73,12 @@ public class SecurityConfiguration {
 
         http.oauth2ResourceServer(oAuth2ResourceServerSpec -> oAuth2ResourceServerSpec
                 .jwt(jwtSpec -> jwtSpec
-//                        .jwtDecoder()
-                        .jwtAuthenticationConverter(authenticationConverter)
+                        .jwtAuthenticationConverter(authorizationConverter)
                 )
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                .pathMatchers("/test/**")
+                .pathMatchers("/test/**")  // TODO: 500 에러 왜 날까 (http://app.ppojin.localhost:30080/test?session_state=710bbd38-fa14-48c2-a54c-78d6c0bbc70c&code=c5c447b8-4460-48f5-887f-5741fe349f3e.710bbd38-fa14-48c2-a54c-78d6c0bbc70c.5ad473f7-f2e8-46cf-a213-5e4710a89371)
                 .permitAll()
                 .anyExchange()
                 .hasAnyAuthority("admin", "user")

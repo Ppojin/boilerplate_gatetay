@@ -3,6 +3,8 @@ ppojin_gw:
     uri: http://keycloak.default.svc:8080
   httpbin:
     uri: http://httpbin-lb.default.svc:8088
+  auth:
+    uri: http://httpbin-lb.default.svc:8088
 
 spring:
   application:

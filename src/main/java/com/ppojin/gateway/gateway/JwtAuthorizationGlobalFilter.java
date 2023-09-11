@@ -1,12 +1,15 @@
 package com.ppojin.gateway.gateway;
 
+import com.ppojin.gateway.gateway.decorator.CachingServerHttpRequestDecorator;
 import com.ppojin.gateway.security.KeycloakAuthenticationConverter;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -15,6 +18,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -50,21 +54,34 @@ public class JwtAuthorizationGlobalFilter implements GlobalFilter, Ordered {
             String[] roles = keycloakAuthenticationConverter.keycloakClientRoles(jwt)
                     .toArray(String[]::new);
             List<String> tenants = jwt.getClaim("tenant");
-            exchange.getRequest().mutate()
-                    .header("X-User-Role", roles)
-                    .header("X-User-Id", (String) jwt.getClaim("sub"))
-                    .header("X-User-Tenant", tenants.toArray(String[]::new))
-                    .build();
+            ServerHttpRequest.Builder builder = exchange.getRequest().mutate();
+            builder.header("X-User-Role", roles);
+            builder.header("X-User-Id", Objects.requireNonNullElse(jwt.getClaim("sub"), ""));
+            builder.header("X-User-Tenant", tenants.toArray(String[]::new));
+            builder.build();
         }
 
         return chain.filter(exchange)
                 .then(Mono.fromRunnable(() -> {
+                    HttpMethod method = request.getMethod();
+                    boolean isTargetMethod = method != HttpMethod.GET || method != HttpMethod.DELETE;
+                    boolean isCachedRequest = exchange.getRequest() instanceof CachingServerHttpRequestDecorator;
+                    if (isTargetMethod && isCachedRequest){
+                        boolean isBlankBody = StringUtils.isBlank(((CachingServerHttpRequestDecorator) request).getCachedBody());
+                        if (!isBlankBody){
+                            HttpHeaders headers1 = request.getHeaders();
+                            for(var key : headers1.keySet() ){
+                                log.info("====> {}: {}", key, headers1.get(key));
+                            }
+                            log.info("request body : {}", ((CachingServerHttpRequestDecorator) request).getCachedBody());
+                        }
+                    }
                     log.info("Last Post Global Filter");
                 }));
     }
 
     @Override
     public int getOrder() {
-        return -1;
+        return 2;
     }
 }

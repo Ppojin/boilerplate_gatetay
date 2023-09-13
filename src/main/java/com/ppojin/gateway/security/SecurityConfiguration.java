@@ -63,6 +63,7 @@ public class SecurityConfiguration {
                 )
         );
 
+
         http.addFilterAfter((ServerWebExchange exchange, WebFilterChain chain) -> {
             log.info("security start");
             return chain.filter(exchange);
@@ -78,7 +79,7 @@ public class SecurityConfiguration {
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                .pathMatchers("/test/**")  // TODO: 500 에러 왜 날까 (http://app.ppojin.localhost:30080/test?session_state=710bbd38-fa14-48c2-a54c-78d6c0bbc70c&code=c5c447b8-4460-48f5-887f-5741fe349f3e.710bbd38-fa14-48c2-a54c-78d6c0bbc70c.5ad473f7-f2e8-46cf-a213-5e4710a89371)
+                .pathMatchers("/test/**", "/auth/**")  // TODO: 500 에러 왜 날까 (http://app.ppojin.localhost:30080/test?session_state=710bbd38-fa14-48c2-a54c-78d6c0bbc70c&code=c5c447b8-4460-48f5-887f-5741fe349f3e.710bbd38-fa14-48c2-a54c-78d6c0bbc70c.5ad473f7-f2e8-46cf-a213-5e4710a89371)
                 .permitAll()
                 .anyExchange()
                 .hasAnyAuthority("admin", "user")

@@ -14,4 +14,9 @@ spring:
     oauth2:
       resource-server:
         jwt:
-          issuer-uri: http://app.ppojin.localhost:30080/realms/ppojin
+          issuer-uri: ${ppojin_gw.hostname}/realms/ppojin
+
+logging:
+  level:
+    feign: TRACE
+#    org.springframework.security: TRACE

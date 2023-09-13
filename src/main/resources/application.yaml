@@ -1,6 +1,8 @@
 ppojin_gw:
+  hostname: http://app.ppojin.localhost:3000
   keycloak:
     uri: http://keycloak.default.svc:8080
+    client-secret: xCnEd9eT3rygFJs793RGXupuFIABnsoa
   httpbin:
     uri: http://httpbin-lb.default.svc:8088
   auth:
@@ -59,7 +61,3 @@ spring:
 app:
   security:
     clientId: test-api
-
-logging:
-  level:
-    org.springframework.security: TRACE

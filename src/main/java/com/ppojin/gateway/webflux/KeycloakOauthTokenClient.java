@@ -1,52 +1,53 @@
-package com.ppojin.gateway.web;
+package com.ppojin.gateway.webflux;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import feign.Headers;
 import feign.RequestLine;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
-import reactor.core.publisher.Mono;
 
-public interface KeycloakOauthToken {
+public interface KeycloakOauthTokenClient {
     @RequestLine("POST /realms/ppojin/protocol/openid-connect/token")
-    @Headers("Content-Type: " + MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    Mono<KeycloakTokenResponse> keycloakOauth(
-//        @RequestBody KeyCloakTokenRequest requestBody
+    @Headers({
+            "Content-Type: " + MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+            "Accept: " + MediaType.APPLICATION_JSON_VALUE
+    })
+    Response getToken(
         @RequestBody String body
     );
 
     @Getter
-    @RequiredArgsConstructor
-    class KeycloakTokenResponse {
+    @Setter
+    @NoArgsConstructor
+    class Response {
         @JsonProperty("access_token")
-        private final String accessToken;
+        private String accessToken;
         @JsonProperty("expires_in")
-        private final Integer expiresIn;
+        private Integer expiresIn;
         @JsonProperty("refresh_expires_in")
-        private final Integer refreshExpiresIn;
+        private Integer refreshExpiresIn;
         @JsonProperty("refresh_token")
-        private final String refreshToken;
+        private String refreshToken;
         @JsonProperty("token_type")
-        private final String tokenType;
+        private String tokenType;
         @JsonProperty("not_before_policy")
-        private final Integer notBeforePolicy;
+        private Integer notBeforePolicy;
         @JsonProperty("session_state")
-        private final String sessionState;
+        private String sessionState;
         @JsonProperty("scope")
-        private final String scope;
+        private String scope;
     }
 
     @Getter
-    class KeyCloakTokenRequest {
+    class Request {
         private final String grantType = "authorization_code";
         private final String clientId = "test-api";
         private final String code;
         private final String redirectUri;
         private final String clientSecret;
 
-        public KeyCloakTokenRequest(String code, String redirectUri, String clientSecret) {
+        public Request(String code, String redirectUri, String clientSecret) {
             this.code = code;
             this.redirectUri = redirectUri;
             this.clientSecret = clientSecret;
@@ -54,10 +55,10 @@ public interface KeycloakOauthToken {
 
         public String getFormBodyStr(){
             return "grant_type="        + grantType +
-                    "&client_id="      + clientId +
-                    "&code="            + code +
-                    "&redirect_uri="    + redirectUri +
-                    "&client_secret="   + clientSecret;
+                   "&client_id="        + clientId +
+                   "&code="             + code +
+                   "&redirect_uri="     + redirectUri +
+                   "&client_secret="    + clientSecret;
         }
     }
 }

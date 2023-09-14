@@ -44,6 +44,8 @@ dependencies {
     implementation 'io.github.openfeign:feign-reactive-wrappers:12.5'
     // https://mvnrepository.com/artifact/io.github.openfeign/feign-json
     implementation 'io.github.openfeign:feign-json:12.5'
+    // https://mvnrepository.com/artifact/io.github.openfeign/feign-jackson
+    implementation 'io.github.openfeign:feign-jackson:12.5'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

@@ -1,6 +1,5 @@
 package com.ppojin.gateway.gateway;
 
-import com.ppojin.gateway.gateway.decorator.CachingServerHttpRequestDecorator;
 import com.ppojin.gateway.security.KeycloakAuthenticationConverter;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -65,15 +65,15 @@ public class JwtAuthorizationGlobalFilter implements GlobalFilter, Ordered {
                 .then(Mono.fromRunnable(() -> {
                     HttpMethod method = request.getMethod();
                     boolean isTargetMethod = method != HttpMethod.GET || method != HttpMethod.DELETE;
-                    boolean isCachedRequest = exchange.getRequest() instanceof CachingServerHttpRequestDecorator;
+                    boolean isCachedRequest = exchange.getRequest() instanceof TracingFilter.Request;
                     if (isTargetMethod && isCachedRequest){
-                        boolean isBlankBody = StringUtils.isBlank(((CachingServerHttpRequestDecorator) request).getCachedBody());
+                        boolean isBlankBody = StringUtils.isBlank(((TracingFilter.Request) request).getCachedBody());
                         if (!isBlankBody){
                             HttpHeaders headers1 = request.getHeaders();
                             for(var key : headers1.keySet() ){
                                 log.info("====> {}: {}", key, headers1.get(key));
                             }
-                            log.info("request body : {}", ((CachingServerHttpRequestDecorator) request).getCachedBody());
+                            log.info("request body : {}", ((TracingFilter.Request) request).getCachedBody());
                         }
                     }
                     log.info("Last Post Global Filter");

@@ -20,6 +20,10 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: frontend
+          uri: ${ppojin_gw.frontend.uri}
+          predicates:
+            - Path=/,/index.html,/_next/**,/favicon.ico
         - id: keycloak
           uri: ${ppojin_gw.keycloak.uri}
           predicates:

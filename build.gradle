@@ -45,7 +45,9 @@ dependencies {
     // https://mvnrepository.com/artifact/io.github.openfeign/feign-json
     implementation 'io.github.openfeign:feign-json:12.5'
     // https://mvnrepository.com/artifact/io.github.openfeign/feign-jackson
-    implementation 'io.github.openfeign:feign-jackson:12.5'
+    implementation 'io.github.openfeign:feign-jackson:12.5'// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+
+    implementation 'org.apache.commons:commons-lang3:3.13.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

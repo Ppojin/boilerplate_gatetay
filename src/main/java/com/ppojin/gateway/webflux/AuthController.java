@@ -1,9 +1,11 @@
 package com.ppojin.gateway.webflux;
 
 import feign.Logger;
+import feign.Retryer;
 import feign.jackson.JacksonDecoder;
 import feign.reactive.ReactorFeign;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
@@ -44,10 +47,11 @@ public class AuthController {
                     }
                 })
                 .logLevel(Logger.Level.FULL)
+                .retryer(new Retryer.Default(100L, TimeUnit.SECONDS.toMillis(3L), 1))
                 .target(KeycloakOauthTokenClient.class, keycloakUri);
     }
 
-    @GetMapping("/auth/**")
+    @GetMapping({"/token/**", "/token"})
     Mono<ResponseEntity<Void>> codeToJwt(
             @RequestParam("code") String code,
             @RequestParam("session_state") String session_state,
@@ -101,16 +105,16 @@ public class AuthController {
         }
 
         public String getRedirectUriForClient(ServerHttpRequest request) {
-            return getRedirectUri(request, 5, "&");
+            return getRedirectUri(request, 6, "&");
         }
 
         private String getRedirectUri(ServerHttpRequest request, int pathBeginIndex, String queryParamDelimiter) {
             MultiValueMap<String, String> queryParams = request.getQueryParams();
             RequestPath path = request.getPath();
+            String redirectParam = getRedirectParam(queryParams, queryParamDelimiter);
             return this.hostName +
                     path.toString().substring(pathBeginIndex) +
-                    "?" +
-                    getRedirectParam(queryParams, queryParamDelimiter);
+                    (StringUtils.isEmpty(redirectParam) ? "" : ("?" + redirectParam));
         }
 
         private static String getRedirectParam(MultiValueMap<String, String> queryParams, String delimiter) {

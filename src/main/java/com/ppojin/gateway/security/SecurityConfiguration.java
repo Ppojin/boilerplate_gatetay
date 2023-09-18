@@ -45,8 +45,7 @@ public class SecurityConfiguration {
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         var keycloakMatcher = pathMatchers("/realms/**", "/resources/**", "/robots.txt");
-        var indexMatcher = pathMatchers("/", "/index.html");
-        var oidcMatcher = pathMatchers("/token/**");
+        var indexMatcher = pathMatchers("/", "/index.html", "/_next/**");
         var staticMatcher = pathMatchers(
                 EnumSet.allOf(StaticResourceLocation.class).stream()
                         .flatMap(StaticResourceLocation::getPatterns)
@@ -57,15 +56,14 @@ public class SecurityConfiguration {
                         new OrServerWebExchangeMatcher(
                                 staticMatcher,
                                 keycloakMatcher,
-                                indexMatcher,
-                                oidcMatcher
+                                indexMatcher
                         )
                 )
         );
 
 
         http.addFilterAfter((ServerWebExchange exchange, WebFilterChain chain) -> {
-            log.info("security start");
+            log.info("security start : {}", exchange.getRequest().getURI());
             return chain.filter(exchange);
         }, SecurityWebFiltersOrder.FIRST);
 
@@ -79,7 +77,7 @@ public class SecurityConfiguration {
         );
 
         http.authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                .pathMatchers("/test/**", "/auth/**")  // TODO: 500 에러 왜 날까 (http://app.ppojin.localhost:30080/test?session_state=710bbd38-fa14-48c2-a54c-78d6c0bbc70c&code=c5c447b8-4460-48f5-887f-5741fe349f3e.710bbd38-fa14-48c2-a54c-78d6c0bbc70c.5ad473f7-f2e8-46cf-a213-5e4710a89371)
+                .pathMatchers("/test/**", "/token/**", "/token")  // TODO: 500 에러 왜 날까 (http://app.ppojin.localhost:30080/test?session_state=710bbd38-fa14-48c2-a54c-78d6c0bbc70c&code=c5c447b8-4460-48f5-887f-5741fe349f3e.710bbd38-fa14-48c2-a54c-78d6c0bbc70c.5ad473f7-f2e8-46cf-a213-5e4710a89371)
                 .permitAll()
                 .anyExchange()
                 .hasAnyAuthority("admin", "user")
@@ -102,7 +100,7 @@ public class SecurityConfiguration {
         );
 
         http.addFilterBefore((ServerWebExchange exchange, WebFilterChain chain) -> {
-            log.info("security confirm");
+            log.info("security confirmed : {}", exchange.getRequest().getURI());
             return chain.filter(exchange);
         }, SecurityWebFiltersOrder.LAST);
 

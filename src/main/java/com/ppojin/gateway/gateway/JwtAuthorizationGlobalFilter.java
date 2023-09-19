@@ -13,6 +13,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -37,7 +38,7 @@ public class JwtAuthorizationGlobalFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        log.info("Global Pre Filter executed");
+//        log.info("Global Pre Filter executed");
         ServerHttpRequest request = exchange.getRequest();
         HttpHeaders headers = request.getHeaders();
 
@@ -53,11 +54,13 @@ public class JwtAuthorizationGlobalFilter implements GlobalFilter, Ordered {
                     .orElseThrow();
             String[] roles = keycloakAuthenticationConverter.keycloakClientRoles(jwt)
                     .toArray(String[]::new);
-            List<String> tenants = jwt.getClaim("tenant");
             ServerHttpRequest.Builder builder = exchange.getRequest().mutate();
             builder.header("X-User-Role", roles);
             builder.header("X-User-Id", Objects.requireNonNullElse(jwt.getClaim("sub"), ""));
-            builder.header("X-User-Tenant", tenants.toArray(String[]::new));
+            List<String> tenants = jwt.getClaim("tenant");
+            if(!CollectionUtils.isEmpty(tenants)){
+                builder.header("X-User-Tenant", tenants.toArray(String[]::new));
+            }
             builder.build();
         }
 
@@ -76,7 +79,7 @@ public class JwtAuthorizationGlobalFilter implements GlobalFilter, Ordered {
                             log.info("request body : {}", ((TracingFilter.Request) request).getCachedBody());
                         }
                     }
-                    log.info("Last Post Global Filter");
+//                    log.info("Last Post Global Filter");
                 }));
     }
 

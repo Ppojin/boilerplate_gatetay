@@ -1,5 +1,6 @@
 package com.ppojin.gateway.webflux;
 
+import feign.FeignException;
 import feign.Logger;
 import feign.Retryer;
 import feign.jackson.JacksonDecoder;
@@ -7,12 +8,11 @@ import feign.reactive.ReactorFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -27,28 +28,32 @@ import java.util.stream.Collectors;
 @RestController
 @Slf4j
 public class AuthController {
-    private final String clientSecret;
     private final RedirectUri redirectUri;
-    private final KeycloakOauthTokenClient keycloakOauthTokenClient;
+    private final TokenService tokenService;
 
     public AuthController(
-            @Value("${ppojin_gw.keycloak.client-secret}") String clientSecret,
             @Value("${ppojin_gw.hostname}") String hostName,
-            @Value("${ppojin_gw.keycloak.uri}") String keycloakUri
+            TokenService tokenService
     ) {
-        this.clientSecret = clientSecret;
         this.redirectUri = new RedirectUri(hostName);
-        this.keycloakOauthTokenClient = ReactorFeign.builder()
-                .decoder(new JacksonDecoder())
-                .logger(new Logger() {
-                    @Override
-                    protected void log(String configKey, String format, Object... args) {
-                        System.out.printf(methodTag(configKey) + format + "%n", args);
-                    }
-                })
-                .logLevel(Logger.Level.FULL)
-                .retryer(new Retryer.Default(100L, TimeUnit.SECONDS.toMillis(3L), 1))
-                .target(KeycloakOauthTokenClient.class, keycloakUri);
+        this.tokenService = tokenService;
+    }
+
+    @GetMapping({"/refresh"})
+    Mono<ResponseEntity<Void>> tokenRefresh(
+            ServerHttpRequest request
+    ) {
+        List<HttpCookie> refreshTokenCookies = request.getCookies().get("X-REFRESH-TOKEN");
+        return Mono
+                .just(refreshTokenCookies.get(0).getValue())
+                .map(tokenService::getTokenWithRefreshToken)
+                .map((TokenDTO tokenResponse) -> ResponseEntity.ok()
+                        .headers(httpHeaders -> {
+                            tokenResponse.getCookieList()
+                                    .forEach(responseCookie -> {
+                                        httpHeaders.add("Set-Cookie", responseCookie.toString());
+                                    });
+                        }).build());
     }
 
     @GetMapping({"/token/**", "/token"})
@@ -59,36 +64,17 @@ public class AuthController {
     ) {
         String redirectUriForClient = redirectUri.getRedirectUriForClient(request);
         return Mono
-                .just(new KeycloakOauthTokenClient.Request(
-                        code,
-                        redirectUri.getRedirectUriForKeycloak(request),
-                        clientSecret
+                .just(List.of(code, redirectUri.getRedirectUriForKeycloak(request)))
+                .map(body -> this.tokenService.getTokenWithAuthorizationCode(
+                        body.get(0), body.get(1)
                 ))
-                .map(body -> keycloakOauthTokenClient.getToken(body.getFormBodyStr()))
-                .map((KeycloakOauthTokenClient.Response tokenResponse) -> ResponseEntity
-                        .status(HttpStatus.MOVED_PERMANENTLY)
+                .map((TokenDTO tokenResponse) -> ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
                         .location(URI.create(redirectUriForClient))
-                        .headers((HttpHeaders h) -> {
-                            ResponseCookie refreshToken = ResponseCookie.fromClientResponse(
-                                            "X-REFRESH-TOKEN",
-                                            tokenResponse.getRefreshToken()
-                                    )
-                                    .maxAge(tokenResponse.getRefreshExpiresIn())
-                                    .httpOnly(true)
-                                    .path("/")
-                                    .secure(false) // should be true in production
-                                    .build();
-                            ResponseCookie accessToken = ResponseCookie.fromClientResponse(
-                                            "X-ACCESS-TOKEN",
-                                            tokenResponse.getAccessToken()
-                                    )
-                                    .maxAge(tokenResponse.getExpiresIn())
-                                    .httpOnly(false)
-                                    .path("/")
-                                    .secure(false) // should be true in production
-                                    .build();
-                            h.add("Set-Cookie", refreshToken.toString());
-                            h.add("Set-Cookie", accessToken.toString());
+                        .headers(httpHeaders -> {
+                            tokenResponse.getCookieList()
+                                    .forEach(responseCookie -> {
+                                        httpHeaders.add("Set-Cookie", responseCookie.toString());
+                                    });
                         }).build());
     }
 

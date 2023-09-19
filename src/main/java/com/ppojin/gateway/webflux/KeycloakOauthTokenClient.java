@@ -13,41 +13,39 @@ public interface KeycloakOauthTokenClient {
             "Content-Type: " + MediaType.APPLICATION_FORM_URLENCODED_VALUE,
             "Accept: " + MediaType.APPLICATION_JSON_VALUE
     })
-    Response getToken(
+    TokenDTO getToken(
         @RequestBody String body
     );
 
     @Getter
-    @Setter
-    @NoArgsConstructor
-    class Response {
-        @JsonProperty("access_token")
-        private String accessToken;
-        @JsonProperty("expires_in")
-        private Integer expiresIn;
-        @JsonProperty("refresh_expires_in")
-        private Integer refreshExpiresIn;
-        @JsonProperty("refresh_token")
-        private String refreshToken;
-        @JsonProperty("token_type")
-        private String tokenType;
-        @JsonProperty("not_before_policy")
-        private Integer notBeforePolicy;
-        @JsonProperty("session_state")
-        private String sessionState;
-        @JsonProperty("scope")
-        private String scope;
+    static class RequestBodyWithRefreshToken {
+        private final String grantType = "refresh_token";
+        private final String clientId = "test-api";
+        private final String refreshToken;
+        private final String clientSecret;
+
+        public RequestBodyWithRefreshToken(String refreshToken, String clientSecret) {
+            this.refreshToken = refreshToken;
+            this.clientSecret = clientSecret;
+        }
+
+        public String getFormBodyStr(){
+            return "grant_type="        + grantType +
+                    "&client_id="        + clientId +
+                    "&refresh_token="     + refreshToken +
+                    "&client_secret="    + clientSecret;
+        }
     }
 
     @Getter
-    class Request {
+    static class RequestBodyWithAuthorizationCode {
         private final String grantType = "authorization_code";
         private final String clientId = "test-api";
         private final String code;
         private final String redirectUri;
         private final String clientSecret;
 
-        public Request(String code, String redirectUri, String clientSecret) {
+        public RequestBodyWithAuthorizationCode(String code, String redirectUri, String clientSecret) {
             this.code = code;
             this.redirectUri = redirectUri;
             this.clientSecret = clientSecret;
